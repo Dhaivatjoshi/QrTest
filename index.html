@@ -10,7 +10,7 @@
     <!-- Marker for tracking -->
     <a-marker type="pattern" url="pattern-hiro.patt" emitevents="true" id="marker">
       <!-- Plane to display the image -->
-      <a-plane id="imagePlane" position="4 0 0" rotation="-90 0 0" width="4" height="3.25" material="shader: flat; scale: 1 1 1"></a-plane>
+      <a-plane id="imagePlane" position="4 0 0" rotation="-90 0 0" width="4" height="3.25" material="shader: flat; scale: 2 2 2"></a-plane>
     </a-marker>
     <!-- Camera to view the scene -->
     <a-entity camera></a-entity>
@@ -20,52 +20,48 @@
     const imagePlane = document.getElementById("imagePlane");
     const marker = document.getElementById("marker");
 
-    const imageUrl = "capture.jpg";
+    const imageUrl = "capture.jpeg";
     let isAnimationRunning = false; // To prevent multiple animations
 
     marker.addEventListener("markerFound", () => {
       if (!isAnimationRunning) {
-        setTimeout(() => {
-          animateZoom(1.5, 1000); // Zoom in to a scale of 1.5 in 1 second
-        }, 500);
+        animatePosition(4, 0, 0, 1000); // Animates from (0, 0, 0) to (4, 0, 0) in 1 second
       }
     });
 
     marker.addEventListener("markerLost", () => {
       if (!isAnimationRunning) {
-        setTimeout(() => {
-          animateZoom(1, 1000); // Zoom out to a scale of 1 in 1 second
-        }, 500);
+        animatePosition(4, 0, 0, 1000); // Animates from (4, 0, 0) to (0, 0, 0) in 1 second
       }
     });
 
-    function animateZoom(targetScale, duration) {
+    function animatePosition(startX, endX, endY, duration) {
       isAnimationRunning = true;
       const startTime = performance.now();
-      const startScale = 1;
+      const startY = 0;
 
-      function updateScale(currentTime) {
+      function updatePosition(currentTime) {
         const elapsedTime = currentTime - startTime;
         if (elapsedTime < duration) {
-          const newScale = startScale + (targetScale - startScale) * (elapsedTime / duration);
-          imagePlane.setAttribute("scale", `${newScale} ${newScale} 1`);
-          requestAnimationFrame(updateScale);
+          const newX = startX + (endX - startX) * (elapsedTime / duration);
+          const newY = startY + (endY - startY) * (elapsedTime / duration);
+          imagePlane.setAttribute("position", `${newX} ${newY} 0`);
+          requestAnimationFrame(updatePosition);
         } else {
-          imagePlane.setAttribute("scale", `${targetScale} ${targetScale} 1`);
+          imagePlane.setAttribute("position", `${endX} ${endY} 0`);
           isAnimationRunning = false;
         }
       }
 
-      requestAnimationFrame(updateScale);
+      requestAnimationFrame(updatePosition);
     }
 
     // Function to update the image source
     function updateImageSource() {
-      const uniqueParam = Date.now();
+      const uniqueParam = Date.now(); // Generate a unique parameter
       const newImageUrl = `${imageUrl}?v=${uniqueParam}`;
       imagePlane.setAttribute("material", "src", newImageUrl);
     }
-
     // Initial image update
     updateImageSource();
     // Check for image update every 5 seconds
