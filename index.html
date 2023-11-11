@@ -38,19 +38,20 @@
       marker.addEventListener("markerFound", () => {
         if (!isAnimationRunning) {
           setTimeout(() => {
-            animatePosition(4, 0, 0, 1000); // Animates from (0, 0, 0) to (4, 0, 0) in 1 second
-          }, 500); // Add a delay of 500 milliseconds before starting the animation
-        }
-      });
-      marker.addEventListener("markerLost", () => {
-        if (!isAnimationRunning) {
-          setTimeout(() => {
-            animatePosition(4, 0, 0, 1000); // Animates from (4, 0, 0) to (0, 0, 0) in 1 second
-          }, 500); // Add a delay of 500 milliseconds before starting the animation
+            animatePositionAndPitch(4, 0, 0, -45, 1000); // Animates position and pitch
+          }, 500);
         }
       });
 
-      function animatePosition(startX, endX, endY, duration) {
+      marker.addEventListener("markerLost", () => {
+        if (!isAnimationRunning) {
+          setTimeout(() => {
+            animatePositionAndPitch(4, 0, 0, 0, 1000); // Animates position and resets pitch
+          }, 500);
+        }
+      });
+
+      function animatePositionAndPitch(endX, endY, endZ, pitch, duration) {
         isAnimationRunning = true;
         const startTime = performance.now();
         const startY = 0;
@@ -58,12 +59,20 @@
         function updatePosition(currentTime) {
           const elapsedTime = currentTime - startTime;
           if (elapsedTime < duration) {
-            const newX = startX + (endX - startX) * (elapsedTime / duration);
+            const newX = (endX - startX) * (elapsedTime / duration);
             const newY = startY + (endY - startY) * (elapsedTime / duration);
-            imagePlane.setAttribute("position", `${newX} ${newY} 0`);
+            const newZ = startY + (endZ - startZ) * (elapsedTime / duration);
+            const newPitch = pitch * (elapsedTime / duration);
+
+            // Update position and pitch
+            imagePlane.setAttribute("position", `${newX} ${newY} ${newZ}`);
+            imagePlane.setAttribute("rotation", `${newPitch} 0 0`);
+
             requestAnimationFrame(updatePosition);
           } else {
-            imagePlane.setAttribute("position", `${endX} ${endY} 0`);
+            // Set final position and pitch
+            imagePlane.setAttribute("position", `${endX} ${endY} ${endZ}`);
+            imagePlane.setAttribute("rotation", `${pitch} 0 0`);
             isAnimationRunning = false;
           }
         }
@@ -73,10 +82,11 @@
 
       // Function to update the image source
       function updateImageSource() {
-        const uniqueParam = Date.now(); // Generate a unique parameter
+        const uniqueParam = Date.now();
         const newImageUrl = `${imageUrl}?v=${uniqueParam}`;
         imagePlane.setAttribute("material", "src", newImageUrl);
       }
+
       // Initial image update
       updateImageSource();
       // Check for image update every 5 seconds
